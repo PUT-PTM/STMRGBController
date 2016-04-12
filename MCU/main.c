@@ -4,9 +4,28 @@
 #include "hd44780.h"
 #include "WS2812B.h"
 #include "UART.h"
-volatile uint8_t intro_flag=1;
+volatile uint8_t intro_flag=1,data_uart,i_data,frame_ready;
+volatile uint8_t data[17]={'\0'};
+
+//$a%123%123%123#	- color accelerometer
+//$m%123#			- music 
+//$h#				- hello
 ISR (USART_RXC_vect)
 {
+	data_uart=UDR;
+	if(data_uart=='$')
+	{
+		i_data=0;
+	}
+	data[i_data++]=data_uart;
+	if(data_uart=='#' && i_data)frame_ready=1;
+	
+	if(frame_ready)
+	{
+		frame_ready=0;
+		if(data[0]=='$' && data[1]=='h' && data[2]=='#')
+		intro_flag=0;
+	}
 	
 	PORTD^=(1<<PD4);
 	
@@ -53,24 +72,36 @@ void intro(void)
 		b_next&=0x0f;
 		for(uint8_t i=0;i<nOfLEDs;i++)
 		WS2812B_send(r,g,b);
-		_delay_ms(60);
+		_delay_ms(50);
 	}
 	cls;
 	lcd("Connected!");
+	
+	while(r || g || b)
+	{
+		if(r)r--;
+		if(g)g--;
+		if(b)b--;
+		for(uint8_t i=0;i<nOfLEDs;i++)
+		WS2812B_send(r,g,b);
+		_delay_ms(40);
+	}
 	return;
 }
 int main(void)
 {
 	lcd_init();
 	DDRD|=(1<<PD4);//RS BLINK LED
+	
 	UART_Init();
 	WS2812B_init();	
 	
-	
-	
+	sei();
+	//UART_Write("aaaa");
 	
 	
 	intro();
+//	while(1);
 /*	uint8_t a=240,b=10;
 	uint8_t roznica;
 	uint8_t tmp;
@@ -82,11 +113,13 @@ int main(void)
 			tmp-=roznica;
 		}
 		_delay_ms(100);*/
-		uint8_t x,y,z,t;
-		x=y=z=t=0;
+
+		//uint8_t x,y,z,t;
+	//	x=y=z=t=0;
     while (1) 
     {
-		t++;
+		
+	/*	t++;
 		if(t<=85){x++;	x= t*3;}
 		if(t>85 && t<=170){y++;y= (t-85)*3;}
 		if(t>170){z++;	z=(t-170)*3;}
@@ -102,7 +135,7 @@ int main(void)
 	lcd_int(z,10);
 	lcd(" ");
 		WS2812B_send(x,y,z);
-		_delay_ms((10));
+		_delay_ms((10));*/
     }
 }
 

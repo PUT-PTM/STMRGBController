@@ -4,13 +4,13 @@
 void WS2812B_sendone(void)
 {
 	WS2812B_PORT|=(1<<WS2812B_PIN);
-	asm("nop");asm("nop");asm("nop");//t85
+	asm("nop");asm("nop");asm("nop");
 	WS2812B_PORT&=~(1<<WS2812B_PIN);
 }
 void WS2812B_sendzero(void)
 {
 	WS2812B_PORT|=(1<<WS2812B_PIN);
-	asm("nop");asm("nop");//t85
+	asm("nop");asm("nop");
 	WS2812B_PORT&=~(1<<WS2812B_PIN);
 }
 void WS2812B_send(uint8_t r, uint8_t g, uint8_t b)

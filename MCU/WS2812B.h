@@ -5,7 +5,7 @@
 #define WS2812B_PORT PORTB
 #define WS2812B_PIN PB3
 
-#define nOfLEDs 16
+#define nOfLEDs 4
 void WS2812B_init(void);
 void WS2812B_sendone(void);
 void WS2812B_sendzero(void);

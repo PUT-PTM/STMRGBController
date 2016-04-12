@@ -6,8 +6,9 @@ void UART_Init(void)
 	UBRRH=0;
 	UBRRL=51;
 	UCSRA=(1<<RXC);
-	UCSRB=(1<<TXEN)|(1<<RXEN);//|(1<<RXCIE);
+	UCSRB=(1<<TXEN)|(1<<RXEN)|(1<<RXCIE);
 	UCSRC=(1<<URSEL)|(1<<UCSZ0)|(1<<UCSZ1);		//8Mhz M8 9600/8/n/1
+
 }
 
 void UART_Char(char data)
