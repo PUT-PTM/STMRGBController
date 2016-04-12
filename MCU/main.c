@@ -4,6 +4,7 @@
 #include "hd44780.h"
 #include "WS2812B.h"
 #include "UART.h"
+volatile uint8_t intro_flag=1;
 ISR (USART_RXC_vect)
 {
 	
@@ -12,12 +13,21 @@ ISR (USART_RXC_vect)
 }
 void intro(void)
 {
-	uint8_t red_array[nOfLEDs]={10,10,10,10};
-	uint8_t green_array[nOfLEDs]={10,20,10,20};
-	uint8_t blue_array[nOfLEDs]={30,10,10,10};
+	uint8_t red_array[16]={10,10,20,10,0,20,15,5,20,10,0,15,5,10,20,10};
+	uint8_t green_array[16]={10,15,10,20,5,20,0,15,20,10,20,0,15,20,10,15};
+	uint8_t blue_array[16]={20,10,20,15,20,15,10,20,15,10,5,10,15,20,20,15};
 	uint8_t r=0,g=0,b=0;
 	uint8_t r_next=0,g_next=0,b_next=0;
-	while(1)
+	
+	lcd(" STM RGB Controller");
+	pos(3,1);
+	lcd("Norbert Hanysz");
+	pos(21,0);
+	lcd("Mikolaj Owczarczak");
+	pos(20,1);
+	lcd("BT wait 4 connect...");
+	
+	while(intro_flag)
 	{
 		if(r==red_array[r_next] && g==green_array[g_next] && b==blue_array[b_next])
 		{
@@ -38,13 +48,16 @@ void intro(void)
 		else if(b>blue_array[b_next])
 				b--;
 	
-		r_next&=0x03;
-		g_next&=0x03;
-		b_next&=0x03;
+		r_next&=0x0f;
+		g_next&=0x0f;
+		b_next&=0x0f;
 		for(uint8_t i=0;i<nOfLEDs;i++)
 		WS2812B_send(r,g,b);
-		_delay_ms(50);
+		_delay_ms(60);
 	}
+	cls;
+	lcd("Connected!");
+	return;
 }
 int main(void)
 {
@@ -52,9 +65,12 @@ int main(void)
 	DDRD|=(1<<PD4);//RS BLINK LED
 	UART_Init();
 	WS2812B_init();	
-	lcd("start");
-	WS2812B_send(3,3,3);
-	//intro();
+	
+	
+	
+	
+	
+	intro();
 /*	uint8_t a=240,b=10;
 	uint8_t roznica;
 	uint8_t tmp;
