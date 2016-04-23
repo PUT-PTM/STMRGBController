@@ -1,14 +1,17 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <stdlib.h>
+
 #include "hd44780.h"
 #include "WS2812B.h"
 #include "UART.h"
-volatile uint8_t intro_flag=1,data_uart,i_data,frame_ready;
+
+volatile uint8_t intro_flag=1,audio_flag,data_uart,i_data,frame_ready;
 volatile uint8_t data[17]={'\0'};
 
 //$a%123%123%123#	- color accelerometer
-//$m%123#			- music 
+//$m%12#			- music 
 //$h#				- hello
 ISR (USART_RXC_vect)
 {
@@ -25,11 +28,25 @@ ISR (USART_RXC_vect)
 		frame_ready=0;
 		if(data[0]=='$' && data[1]=='h' && data[2]=='#')
 		intro_flag=0;
+		if( (!audio_flag) && data[0]=='$' && data[1]=='m' && data[2]=='%' && (data[3]>='0' || data[3]<='9') && (data[4]=='#' || data[5]=='#'))
+		audio_flag=1;
 	}
 	
 	PORTD^=(1<<PD4);
 	
 }
+void set_equalizer(uint8_t level,uint8_t tab_red[],uint8_t tab_green[])
+{
+	for(uint8_t i=0;i< level;i++)
+	{
+		WS2812B_send(tab_red[i],tab_green[i],0);
+	}
+	for(uint8_t i=level;i<nOfLEDs;i++)
+	{
+		WS2812B_send(0,0,0);
+	}
+}
+
 void intro(void)
 {
 	uint8_t red_array[16]={10,10,20,10,0,20,15,5,20,10,0,15,5,10,20,10};
@@ -88,6 +105,7 @@ void intro(void)
 	}
 	return;
 }
+
 int main(void)
 {
 	lcd_init();
@@ -95,13 +113,32 @@ int main(void)
 	
 	UART_Init();
 	WS2812B_init();	
+	uint8_t red_tab[nOfLEDs]={0,0,0,0,0,0,0,0,10,10,10,10,10,10,10,10};
+	uint8_t green_tab[nOfLEDs]={10,10,10,10,10,10,10,10,10,10,10,10,0,0,0,0};
 	
 	sei();
-	//UART_Write("aaaa");
-	
-	
-	intro();
-//	while(1);
+    while (1) 
+    {
+		if(audio_flag)
+		{
+			audio_flag=0;
+			
+			int sound_level;
+			char buffer[3]={'\0'};
+			
+			buffer[0]=data[3];
+			if(data[5]=='#')
+				buffer[1]=data[4];
+			
+			sound_level=atoi(buffer);
+			
+			set_equalizer(sound_level,red_tab,green_tab);
+		}
+    }
+}
+
+//	intro();
+
 /*	uint8_t a=240,b=10;
 	uint8_t roznica;
 	uint8_t tmp;
@@ -116,26 +153,4 @@ int main(void)
 
 		//uint8_t x,y,z,t;
 	//	x=y=z=t=0;
-    while (1) 
-    {
-		
-	/*	t++;
-		if(t<=85){x++;	x= t*3;}
-		if(t>85 && t<=170){y++;y= (t-85)*3;}
-		if(t>170){z++;	z=(t-170)*3;}
-	pos(0,1);
-		lcd_int(x,10);
-		lcd(" ");
-	
-	
-	lcd_int(y,10);
-	lcd(" ");
-	
-	
-	lcd_int(z,10);
-	lcd(" ");
-		WS2812B_send(x,y,z);
-		_delay_ms((10));*/
-    }
-}
-
+	// #036h#035
