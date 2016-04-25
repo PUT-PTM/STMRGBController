@@ -1,24 +1,24 @@
 #STMRGBController 
 
-Overview
+#Overview
 
 STMRGBController using the accelerometer in the phone controls the LEDs
 
-Description
+#Description
 
-Tools
+#Tools
 
-How to run
+#How to run
 
-How to compile
+#How to compile
 
-Future improvements
+#Future improvements
 
-Attributions
+#Attributions
 
-License
+#License
 
-Credits
+#Credits
 
 Norbert Hanysz 
 Mikołaj Owczarczak 
