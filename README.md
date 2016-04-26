@@ -6,7 +6,11 @@ STMRGBController using the accelerometer in the phone controls the LEDs
 
 #Description
 
+
+
 #Tools
+
+Aplication: Android Studio 1.5.1, Java
 
 #How to run
 
@@ -16,7 +20,11 @@ STMRGBController using the accelerometer in the phone controls the LEDs
 
 #Attributions
 
+http://developer.android.com/guide/topics/connectivity/bluetooth.html
+
 #License
+
+MIT
 
 #Credits
 
