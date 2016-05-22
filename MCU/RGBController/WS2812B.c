@@ -4,14 +4,16 @@
 void WS2812B_sendone(void)
 {
 	WS2812B_PORT|=(1<<WS2812B_PIN);
-	asm("nop");asm("nop");asm("nop");
+	asm("nop");asm("nop");asm("nop");asm("nop");asm("nop");asm("nop");asm("nop");
 	WS2812B_PORT&=~(1<<WS2812B_PIN);
+	asm("nop");asm("nop");
 }
 void WS2812B_sendzero(void)
 {
 	WS2812B_PORT|=(1<<WS2812B_PIN);
-	asm("nop");asm("nop");
+	asm("nop");asm("nop");asm("nop");asm("nop");asm("nop");asm("nop");
 	WS2812B_PORT&=~(1<<WS2812B_PIN);
+	asm("nop");asm("nop");
 }
 void WS2812B_send(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -28,10 +30,11 @@ void WS2812B_send(uint8_t r, uint8_t g, uint8_t b)
 		if(b&0x02)WS2812B_sendone();else WS2812B_sendzero();		if(b&0x01)WS2812B_sendone();else WS2812B_sendzero();
 }
 
-void WS2812_none(void)
+void WS2812B_none(void)
 {
 	for(uint8_t i=0;i<nOfLEDs;i++)
 		WS2812B_send(0,0,0);
+	_delay_us(10);
 }
 
 void WS2812B_init(void)

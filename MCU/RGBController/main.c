@@ -7,15 +7,17 @@
 #include "WS2812B.h"
 #include "UART.h"
 
-volatile uint8_t intro_flag=1,audio_flag,data_uart,i_data,frame_ready;
+volatile uint8_t intro_flag=1,data_uart,i_data,frame_ready,acc_flag,bye_flag=1;
 volatile uint8_t data[17]={'\0'};
 
+
 //$a%123%123%123#	- color accelerometer
-//$m%12#			- music 
-//$h#				- hello
+//$hi#				- hello
+//$bye#
 ISR (USART_RXC_vect)
 {
 	data_uart=UDR;
+	PORTD&=~(1<<PD4);
 	if(data_uart=='$')
 	{
 		i_data=0;
@@ -25,26 +27,17 @@ ISR (USART_RXC_vect)
 	
 	if(frame_ready)
 	{
-		frame_ready=0;
-		if(data[0]=='$' && data[1]=='h' && data[2]=='#')
-		intro_flag=0;
-		if( (!audio_flag) && data[0]=='$' && data[1]=='m' && data[2]=='%' && (data[3]>='0' || data[3]<='9') && (data[4]=='#' || data[5]=='#'))
-		audio_flag=1;
+		frame_ready=0; 
+		if(data[0]=='$' && data[1]=='h' &&  data[2]=='i' && data[3]=='#')
+			intro_flag=0;
+		if(data[0]=='$' && data[1]=='a' && data[2]=='%')
+			acc_flag=1;
+		if(data[0]=='$' && data[1]=='b' )// data[2]=='y' && data[3]=='e' && data[4]=='#'
+			bye_flag=1;
 	}
 	
-	PORTD^=(1<<PD4);
+	PORTD|=(1<<PD4);
 	
-}
-void set_equalizer(uint8_t level,uint8_t tab_red[],uint8_t tab_green[])
-{
-	for(uint8_t i=0;i< level;i++)
-	{
-		WS2812B_send(tab_red[i],tab_green[i],0);
-	}
-	for(uint8_t i=level;i<nOfLEDs;i++)
-	{
-		WS2812B_send(0,0,0);
-	}
 }
 
 void intro(void)
@@ -54,7 +47,7 @@ void intro(void)
 	uint8_t blue_array[16]={20,10,20,15,20,15,10,20,15,10,5,10,15,20,20,15};
 	uint8_t r=0,g=0,b=0;
 	uint8_t r_next=0,g_next=0,b_next=0;
-	
+	cls;
 	lcd(" STM RGB Controller");
 	pos(3,1);
 	lcd("Norbert Hanysz");
@@ -103,9 +96,46 @@ void intro(void)
 		WS2812B_send(r,g,b);
 		_delay_ms(40);
 	}
+	
 	return;
 }
 
+void analyse_frame(char bufferred[], char buffergreen[], char bufferblue[])
+{
+	uint8_t inc=0;
+	
+	uint8_t next_start=0;
+	
+	for(uint8_t i=3;i<6;i++)
+	{
+		if(data[i]!='%')
+		bufferred[inc++] = data[i];
+		else
+		break;
+		next_start = i;
+	}
+	
+	inc=0;
+	
+	for(uint8_t i=next_start+2;i<next_start+5;i++)
+	{
+		if(data[i]!='%')
+		buffergreen[inc++] = data[i];
+		else
+		break;
+		next_start=i;
+	}
+	
+	inc =0;
+	
+	for(uint8_t i=next_start+2;i<next_start+5;i++)
+	{
+		if(data[i]!='%')
+		bufferblue[inc++] = data[i];
+		else
+		break;
+	}
+}
 int main(void)
 {
 	lcd_init();
@@ -113,44 +143,48 @@ int main(void)
 	
 	UART_Init();
 	WS2812B_init();	
-	uint8_t red_tab[nOfLEDs]={0,0,0,0,0,0,0,0,10,10,10,10,10,10,10,10};
-	uint8_t green_tab[nOfLEDs]={10,10,10,10,10,10,10,10,10,10,10,10,0,0,0,0};
 	
 	sei();
+	
+	uint8_t red,green,blue;
+	char buffergreen[4];
+	char bufferred[4];
+	char bufferblue[4];
+	
+
     while (1) 
     {
-		if(audio_flag)
+		if(bye_flag)
 		{
-			audio_flag=0;
-			
-			int sound_level;
-			char buffer[3]={'\0'};
-			
-			buffer[0]=data[3];
-			if(data[5]=='#')
-				buffer[1]=data[4];
-			
-			sound_level=atoi(buffer);
-			
-			set_equalizer(sound_level,red_tab,green_tab);
+			bye_flag=0;
+			intro_flag=1;
+			intro();
 		}
+		
+		if(acc_flag)
+		{
+			acc_flag=0;
+			
+			for(uint8_t i=0;i<3;i++)
+				bufferred[i]=buffergreen[i]=bufferblue[i]='\0';
+			
+			analyse_frame(bufferred,buffergreen,bufferblue);
+			
+			red=atoi(bufferred);
+			green=atoi(buffergreen);
+			blue=atoi(bufferblue);
+			
+			pos(0,0);
+			lcd_int(red,10);			lcd("  ");
+			lcd_int(green,10);			lcd("  ");
+			lcd_int(blue,10);			lcd("  ");
+			pos(0,1);
+			lcd_RAM(data);
+			
+			for(uint8_t i=0;i<nOfLEDs;i++)
+				WS2812B_send(red,green,blue);
+		}
+		
     }
 }
 
-//	intro();
-
-/*	uint8_t a=240,b=10;
-	uint8_t roznica;
-	uint8_t tmp;
-		roznica = (a-b)/nOfLEDs;
-		tmp=a;
-		for(uint8_t i=0;i<nOfLEDs;i++)
-		{
-			WS2812B_send(0,tmp-roznica,0);
-			tmp-=roznica;
-		}
-		_delay_ms(100);*/
-
-		//uint8_t x,y,z,t;
-	//	x=y=z=t=0;
-	// #036h#035
