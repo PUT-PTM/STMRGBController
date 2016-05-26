@@ -7,7 +7,7 @@
 #include "WS2812B.h"
 #include "UART.h"
 
-volatile uint8_t intro_flag=1,data_uart,i_data,frame_ready,acc_flag,bye_flag=1;
+volatile uint8_t intro_flag=1,data_uart,i_data,frame_ready,acc_flag,bye_flag=1,mode;
 volatile uint8_t data[17]={'\0'};
 
 
@@ -136,12 +136,25 @@ void analyse_frame(char bufferred[], char buffergreen[], char bufferblue[])
 		break;
 	}
 }
+void INT_init(void)
+{
+	DDRD &= ~(1<<PD2);
+	PORTD|=(1<<PD2);
+	MCUCR|=(1<<ISC01);
+	GICR|=(1<<INT0);
+}
+ISR(INT0_vect)
+{
+	mode^=1;
+}
 int main(void)
 {
 	lcd_init();
 	DDRD|=(1<<PD4);//RS BLINK LED
 	
 	UART_Init();
+	
+	INT_init();
 	WS2812B_init();	
 	
 	sei();
@@ -154,13 +167,13 @@ int main(void)
 
     while (1) 
     {
+		/**/
 		if(bye_flag)
 		{
 			bye_flag=0;
 			intro_flag=1;
 			intro();
 		}
-		
 		if(acc_flag)
 		{
 			acc_flag=0;
@@ -180,9 +193,26 @@ int main(void)
 			lcd_int(blue,10);			lcd("  ");
 			pos(0,1);
 			lcd_RAM(data);
-			
-			for(uint8_t i=0;i<nOfLEDs;i++)
-				WS2812B_send(red,green,blue);
+			if(mode)
+			{	
+				for(uint8_t i=0;i<nOfLEDs;i++)
+				{
+					if(i<4)
+						WS2812B_send(red,0,0);
+					else if(i<8)
+						WS2812B_send(0,green,0);
+					else if(i<12)
+						WS2812B_send(0,0,blue);
+					else 
+						WS2812B_send(red,green,blue);
+				}
+			}
+			else
+			{
+				for(uint8_t i=0;i<nOfLEDs;i++)
+					WS2812B_send(red,green,blue);
+			}
+			_delay_ms(1);
 		}
 		
     }
