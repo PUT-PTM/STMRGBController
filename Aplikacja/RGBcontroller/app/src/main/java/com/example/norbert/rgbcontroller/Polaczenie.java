@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -43,7 +44,8 @@ public class Polaczenie extends AppCompatActivity
                 String value = (String) myListView.getItemAtPosition(position);
                 String adres = value.substring(value.length() - 17);
                 Intent nowyEkran = new Intent(getApplicationContext(), Akcelerometr.class);
-                nowyEkran.putExtra("adresMAC", adres);
+
+                nowyEkran.putExtra("adresMAC", adres); // zapisanie adresu MAC i przekazanie go do innego activity
                 startActivity(nowyEkran);
                 finish();
 
@@ -85,5 +87,4 @@ public class Polaczenie extends AppCompatActivity
             registerReceiver(mReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
         }
     }
-    //-------------------------------------------------------------
 }
