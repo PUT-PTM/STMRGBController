@@ -18,6 +18,7 @@ Aplication: Android Studio 1.5.1, Java
 Microcontroller: Atmel Studio 7, C
 
 #How to connect
+.hex is for AtMega8 @16MHz, board: ZL2AVR. Pinout:
 PB3 - WS2812B x16,
 PD0 (RX) - connect to TX BT,
 PD1 (TX) - connect to RX BT,
